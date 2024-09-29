@@ -1,7 +1,3 @@
-Here's a comprehensive README template for your Go API project that incorporates the features you've implemented, including task management, user authentication, and JWT token handling. Feel free to customize it as needed:
-
----
-
 # Task Management API
 
 ## Overview
