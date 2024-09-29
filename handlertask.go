@@ -8,7 +8,7 @@ import (
 )
 
 func createTask(r *gin.Engine, db *gorm.DB) {
-	r.POST("/createTask" ,func(c *gin.Context) {
+	r.POST("/createTask", jwtAuthMiddleware(), RoleMiddleware("User","Admin"),func(c *gin.Context) {
 		var task Task
 
 		if err := c.BindJSON(&task); err != nil {
@@ -28,7 +28,7 @@ func createTask(r *gin.Engine, db *gorm.DB) {
 }
 
 func getTasks(r *gin.Engine, db *gorm.DB) {
-    r.GET("/getTasks", jwtAuthMiddleware(), func(c *gin.Context) {
+    r.GET("/getTasks", jwtAuthMiddleware(), RoleMiddleware("User","Admin"), func(c *gin.Context) {
 		var task []Task
 
 		result := db.Find(&task)
@@ -41,7 +41,7 @@ func getTasks(r *gin.Engine, db *gorm.DB) {
 		c.JSON(http.StatusOK, task)
 	})
 
-	r.GET("/getTask/:id", func(c *gin.Context) {
+	r.GET("/getTask/:id", jwtAuthMiddleware(), RoleMiddleware("User","Admin"),func(c *gin.Context) {
 		var task Task
 		id := c.Param("id")
 
@@ -57,7 +57,7 @@ func getTasks(r *gin.Engine, db *gorm.DB) {
 }
 
 func updateTask(r *gin.Engine, db *gorm.DB) {
-    r.PUT("/updateTask/:id",func(c *gin.Context) {
+    r.PUT("/updateTask/:id", jwtAuthMiddleware(), RoleMiddleware("Admin"), func(c *gin.Context) {
 		var task Task
 
 		result := db.First(&task, c.Param("id"))
@@ -78,7 +78,7 @@ func updateTask(r *gin.Engine, db *gorm.DB) {
 }
 
 func deleteTask(r *gin.Engine, db *gorm.DB) {
-    r.DELETE("/deleteTask/:id", jwtAuthMiddleware() ,func(c *gin.Context) {
+    r.DELETE("/deleteTask/:id", jwtAuthMiddleware(), RoleMiddleware("Admin"),func(c *gin.Context) {
 		var task Task
 
 		result := db.First(&task, c.Param("id"))

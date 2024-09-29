@@ -16,7 +16,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"github.com/joho/godotenv"
-	"errors"
 	"strings"
 	
 )
@@ -77,7 +76,7 @@ func createToken(user Users) (string, error) {
 
 	claims["userID"] = user.ID
 	claims["exp"] = time.Now().Add(1 * time.Hour).Unix()
-	claims["role"] = "user"
+	claims["role"] = user.Role
 	err := godotenv.Load()
 	if err != nil {
 		panic("No .env file found")
@@ -95,44 +94,10 @@ func createToken(user Users) (string, error) {
 	return tokenString, nil
 }
 
-func jwtMiddleWare(c *gin.Context) error {
-	tokenString := c.GetHeader("Authorization")
-	if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "No or invalid authorization given"})
-		return errors.New("no or invalid authorization given")
-	}
-	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-	// Parse the token
-	key := os.Getenv("SECRETKEY")
-	if key == "" {
-		return fmt.Errorf("SECRETKEY environment variable is not set")
-	}
-	claims := &CustomClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-        return []byte(key), nil
-    })
-
-	if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token", "error": err.Error()})
-        return err
-    }
-
-	if !token.Valid {
-        c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-        return errors.New("invalid token")
-    }
-
-	c.Set("claims", claims)
-
-    // Continue to the next handler
-    return nil
-
-}
-
 func RoleMiddleware(roles ...string) gin.HandlerFunc {
     return func(c *gin.Context) {
         // Retrieve the user's role from the context
-        userRole, exists := c.Get("role")
+        userRole, exists := c.Get("Role")
         if !exists {
             c.JSON(http.StatusForbidden, gin.H{"error": "No role found"})
             c.Abort()
@@ -184,8 +149,7 @@ func jwtAuthMiddleware() gin.HandlerFunc {
     	    c.Abort()
 			return
     	}
-
-		c.Set("claims", claims)
+		c.Set("Role", claims.Role)
 
     	c.Next()
 	}

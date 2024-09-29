@@ -4,6 +4,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/driver/sqlite"
 	"time"
+	"github.com/joho/godotenv"
+	"os"
 )
 
 type Users struct {
@@ -23,6 +25,11 @@ type Task struct {
 }
 
 func setupDatabase() *gorm.DB {
+	err := godotenv.Load()
+	if err != nil {
+		panic("No .env file found")
+	}
+	dbname := os.Getenv("DATABASE")
 	db, err := gorm.Open(sqlite.Open("task.db"), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect to the database")
