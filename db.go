@@ -30,7 +30,7 @@ func setupDatabase() *gorm.DB {
 		panic("No .env file found")
 	}
 	dbname := os.Getenv("DATABASE")
-	db, err := gorm.Open(sqlite.Open("task.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dbname), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
