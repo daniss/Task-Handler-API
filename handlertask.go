@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-func createTask(r *gin.RouterGroup, db *gorm.DB) {
+func createTask(r *gin.Engine, db *gorm.DB) {
 	r.POST("/createTask" ,func(c *gin.Context) {
 		var task Task
 
@@ -27,8 +27,8 @@ func createTask(r *gin.RouterGroup, db *gorm.DB) {
 	})
 }
 
-func getTasks(r *gin.RouterGroup, db *gorm.DB) {
-    r.GET("/getTasks", func(c *gin.Context) {
+func getTasks(r *gin.Engine, db *gorm.DB) {
+    r.GET("/getTasks", jwtAuthMiddleware(), func(c *gin.Context) {
 		var task []Task
 
 		result := db.Find(&task)
@@ -56,7 +56,7 @@ func getTasks(r *gin.RouterGroup, db *gorm.DB) {
 	})
 }
 
-func updateTask(r *gin.RouterGroup, db *gorm.DB) {
+func updateTask(r *gin.Engine, db *gorm.DB) {
     r.PUT("/updateTask/:id",func(c *gin.Context) {
 		var task Task
 
@@ -77,8 +77,8 @@ func updateTask(r *gin.RouterGroup, db *gorm.DB) {
 	})
 }
 
-func deleteTask(r *gin.RouterGroup, db *gorm.DB) {
-    r.DELETE("/deleteTask/:id",func(c *gin.Context) {
+func deleteTask(r *gin.Engine, db *gorm.DB) {
+    r.DELETE("/deleteTask/:id", jwtAuthMiddleware() ,func(c *gin.Context) {
 		var task Task
 
 		result := db.First(&task, c.Param("id"))
@@ -100,14 +100,14 @@ func main() {
 	db := setupDatabase()
 	r := gin.Default()
 
-	api := r.Group("/api")
-	api.Use(jwtAuthMiddleware)
+	// api := r.Group("/api")
+	// api.Use(jwtAuthMiddleware)
 	register(r, db)
 	login(r, db)
-	createTask(api, db)
-	getTasks(api, db)
-	updateTask(api, db)
-	deleteTask(api, db)
+	createTask(r, db)
+	getTasks(r, db)
+	updateTask(r, db)
+	deleteTask(r, db)
 	
 	
 	r.Run()

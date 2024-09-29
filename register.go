@@ -139,10 +139,9 @@ func RoleMiddleware(roles ...string) gin.HandlerFunc {
             return
         }
 
-        // Check if the user's role matches one of the allowed roles
         for _, role := range roles {
             if userRole == role {
-                c.Next() // Role is valid, proceed to the next handler
+                c.Next()
                 return
             }
         }
@@ -154,12 +153,42 @@ func RoleMiddleware(roles ...string) gin.HandlerFunc {
 }
 
 
-func jwtAuthMiddleware(c *gin.Context) {
-    if err := jwtMiddleWare(c); err != nil {
-        c.AbortWithStatus(http.StatusUnauthorized)
-        return
-    }
-    c.Next() // If everything is fine, proceed to the next handler
+func jwtAuthMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+		tokenString := c.GetHeader("Authorization")
+		if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "No or invalid authorization given"})
+			c.Abort()
+			return
+		}
+		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+		// Parse the token
+		key := os.Getenv("SECRETKEY")
+		if key == "" {
+			c.Abort()
+			panic("SECRETKEY environment variable is not set")
+		}
+		claims := &CustomClaims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+    	    return []byte(key), nil
+    	})
+
+		if err != nil {
+    	    c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token", "error": err.Error()})
+			c.Abort()
+    	    return
+    	}
+
+		if !token.Valid {
+    	    c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+    	    c.Abort()
+			return
+    	}
+
+		c.Set("claims", claims)
+
+    	c.Next()
+	}
 }
 
 func login(r *gin.Engine, db *gorm.DB) {
